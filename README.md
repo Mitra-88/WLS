@@ -18,9 +18,9 @@ _Currently hardcoded to `4000` (Garry’s Mod). Modify the code for other games 
 
 | Operating System | Supported Versions                                       | Architecture |
 |------------------|----------------------------------------------------------|--------------|
-| Windows          | 11, 10, 8.1, 8                                           | 64-bit       |
-| Linux            | Debian 12, Ubuntu 22.04, Fedora 40, Arch Linux, OpenSUSE | 64-bit       |
-| macOS            | macOS 15, 14, 13, 12, 11, 10.15                          | ARM64        |
+| Windows          | 11, 10                                                   | 64-bit       |
+| Linux            | Debian 13, Ubuntu 24.04, Fedora 40, Arch Linux, OpenSUSE | 64-bit       |
+| macOS            | macOS 26, 15, 14, 13, 12                                 | ARM64        |
 
 - **RAM Usage:** 20MB
 - **Disk Space:** 25MB
@@ -28,9 +28,9 @@ _Currently hardcoded to `4000` (Garry’s Mod). Modify the code for other games 
 ## Installation
 
 Download the latest release from [GitHub Releases](https://github.com/VermeilChan/WLS/releases/latest):
-- **Windows:** `WLS-1.x.x-Windows-x64.7z`
-- **Linux:** `WLS-1.x.x-Linux-x64.tar.xz`
-- **macOS:** `WLS-1.x.x-macOS-Arm64.zip`
+- **Windows:** `WLS-1.x.x-Windows-x64.zip`
+- **Linux:** `WLS-1.x.x-Linux-x64.zip`
+- **macOS:** `WLS-1.x.x-macOS-ARM64.zip`
 
 ## Usage
 
