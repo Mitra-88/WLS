@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/**'
-      - 'Src/**'
-      - 'version.txt'
 
 jobs:
   build:
@@ -15,20 +11,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10.11'
+          python-version: '33.12.10'
           architecture: 'x64'
           cache: 'pip'
 
-      - name: Get Shortened Commit SHA
-        id: shorten_commit_sha
-        uses: iendeavor/shorten-commit-sha@v2.0.4
-        with:
-          length: 7
+      - name: Get short SHA
+        id: sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Create virtual environment
         run: py -m venv .venv
@@ -44,7 +39,7 @@ jobs:
           pyinstaller --noconfirm --onefile --console --icon "Src/Icon/WorkshopLinkStealer.ico" --name "WLS" --clean --optimize "2" --version-file "version.txt" --add-data "Src/get_addons.py;." --add-data "Src/utils.py;."  "Src/cli.py"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: WLS-${{ steps.shorten_commit_sha.outputs.shortened_commit_sha }}-Windows-x64
+          name: WLS-${{ steps.sha.outputs.short_sha }}-Windows-x64
           path: dist/WLS.exe

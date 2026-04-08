@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/**'
-      - 'Src/**'
-      - 'version.txt'
 
 jobs:
   build:
@@ -15,20 +11,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
-          python-version: '3.10.16'
+          python-version: '3.12.13'
           architecture: 'x64'
           cache: 'pip'
 
-      - name: Get Shortened Commit SHA
-        id: shorten_commit_sha
-        uses: iendeavor/shorten-commit-sha@v2.0.4
-        with:
-          length: 7
+      - name: Get short SHA
+        id: sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Create virtual environment
         run: python3 -m venv .venv
@@ -44,7 +39,7 @@ jobs:
           pyinstaller --noconfirm --onefile --console --name "WLS" --clean --optimize "2" --strip --add-data "Src/get_addons.py:." --add-data "Src/utils.py:."  "Src/cli.py"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: WLS-${{ steps.shorten_commit_sha.outputs.shortened_commit_sha }}-Linux-x64
+          name: WLS-${{ steps.sha.outputs.short_sha }}-Linux-x64
           path: dist/WLS
