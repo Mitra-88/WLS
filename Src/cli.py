@@ -1,10 +1,10 @@
 import sys
 from get_addons import main as get_addons_links
-from utils import get_system_info, wly_version, build_date, requests_version, beautifulsoup4_version, pyinstaller_version
+from utils import get_system_info, wls_version, build_date, requests_version, beautifulsoup4_version, pyinstaller_version
 
 def display_info():
     print(
-        f"WorkshopLinkStealer {wly_version}, {get_system_info()}.\n"
+        f"WorkshopLinkStealer {wls_version}, {get_system_info()}.\n"
         f"Build Date: {build_date}.\n"
         f"Build Info: Pyinstaller {pyinstaller_version}, BeautifulSoup4 {beautifulsoup4_version}, "
         f"Requests {requests_version}.\n"
