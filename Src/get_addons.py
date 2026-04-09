@@ -9,6 +9,23 @@ from bs4 import BeautifulSoup
 APP_ID = 4000
 ID_REGEX = re.compile(r"id=(\d+)")
 RATE_LIMIT = 0.5
+SESSION = requests.Session()
+SESSION.headers.update(
+    {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/146.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://steamcommunity.com/",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+)
+SESSION.cookies.update(
+    {
+        "birthtime": "0",
+        "mature_content": "1",
+    }
+)
 
 class WorkshopItem:
     def __init__(self, link, title):
@@ -35,33 +52,14 @@ def get_collection_id(url):
     return ids[0] if ids and ids[0].isdigit() else None
 
 def fetch_collection(url):
-    session = requests.Session()
-    session.headers.update(
-        {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36"
-            ),
-            "Referer": "https://steamcommunity.com/",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-    )
-
-    session.cookies.update(
-        {
-            "birthtime": "0",
-            "mature_content": "1",
-        }
-    )
-
     response = None
 
     for attempt in range(3):
         try:
             time.sleep(RATE_LIMIT)
-            response = session.get(url, timeout=30)
+            response = SESSION.get(url, timeout=30)
             if response.status_code == 404:
-                raise Exception("This collection doesn’t exist.")
+                raise Exception("This collection doesn't exist.")
             if response.status_code == 403:
                 raise Exception("This collection is private or unavailable.")
             response.raise_for_status()
@@ -70,7 +68,7 @@ def fetch_collection(url):
         except requests.RequestException:
             if attempt == 2:
                 raise Exception(
-                    "Couldn’t connect to Steam right now. Please try again."
+                    "Couldn't connect to Steam right now. Please try again."
                 )
             time.sleep(1.5)
 
@@ -177,7 +175,7 @@ def main():
     collection_id = get_collection_id(url)
 
     if not collection_id:
-        print("That doesn’t look like a valid Steam collection link.")
+        print("That doesn't look like a valid Steam collection link.")
         return
 
     print("\nLoading collection...")
@@ -226,4 +224,4 @@ def main():
         write_file(output_file, content + "\n")
         print(f"\nSaved successfully to: {output_file}")
     except OSError:
-        print("\nCouldn’t save the file. Please try again.")
+        print("\nCouldn't save the file. Please try again.")
