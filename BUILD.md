@@ -11,29 +11,26 @@
 
 # Platforms
 
-LinkYeeter supports the following platforms:
+WorkshopLinkStealer supports the following platforms:
 
 | Operating System | Supported Versions                                       | Architecture |
 |------------------|----------------------------------------------------------|--------------|
-| Windows          | 11, 10, 8.1, 8                                           | 64-bit       |
-| Linux            | Debian 12, Ubuntu 22.04, Fedora 40, Arch Linux, OpenSUSE | 64-bit       |
-| macOS            | macOS 14, 13, 12, 11, 10.15                              | Arm64        |
-
-_Windows 7 is technically supported, but you need PyInstaller 4.10._
+| Windows          | 11, 10                                                   | 64-bit       |
+| Linux            | Debian 13, Ubuntu 24.04, Fedora 43, Arch Linux, OpenSUSE | 64-bit       |
+| macOS            | macOS 26, 14, 13, 12                                     | ARM64        |
 
 # Getting the Source Code
 
-- Download the zip archive from the [latest release](https://github.com/VermeilChan/LinkYeeter/releases/latest). `Source code
-(zip)`
+- Download the zip archive from the [latest release](https://github.com/Mitra-88/WorkshopLinkStealer/releases/latest). `Source code (zip)`
 
 # Dependencies
 
-You need the following to compile LinkYeeter:
+You need the following to compile WorkshopLinkStealer:
 
-- [Python](https://www.python.org/) 3.10+
-- [PyInstaller](https://www.pyinstaller.org/) 6.12.0+
-- [Beautiful Soup](https://pypi.org/project/beautifulsoup4/) 4.13.3+
-- [Requests](https://pypi.org/project/requests/) 2.32.3+
+- [Python](https://www.python.org/) 3.12+
+- [PyInstaller](https://www.pyinstaller.org/) 6.19.0+
+- [Beautiful Soup](https://pypi.org/project/beautifulsoup4/) 4.14.3+
+- [Requests](https://pypi.org/project/requests/) 2.33.1+
 
 ## Linux Dependencies
 

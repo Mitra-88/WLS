@@ -1,117 +1,227 @@
-from os import path
+import re
+import time
+import requests
+from pathlib import Path
 from platform import system
-from re import match, search
+from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
-from requests import Session, exceptions
 
-def get_addons_links():
-    url = input("Enter the full link to the Steam collection: ").strip()
-    
-    pattern = r'^https://steamcommunity\.com/(workshop|sharedfiles)/filedetails/\?id=\d+(&.*)?$'
-    if not match(pattern, url):
-        print("Invalid URL format. Please enter a valid Steam collection URL.")
+APP_ID = 4000
+ID_REGEX = re.compile(r"id=(\d+)")
+RATE_LIMIT = 0.5
+SESSION = requests.Session()
+SESSION.headers.update(
+    {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/146.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://steamcommunity.com/",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+)
+SESSION.cookies.update(
+    {
+        "birthtime": "0",
+        "mature_content": "1",
+    }
+)
+
+class WorkshopItem:
+    def __init__(self, link, title):
+        self.link = link
+        self.title = title
+        match = ID_REGEX.search(link)
+        self.item_id = match.group(1) if match else None
+
+def get_collection_id(url):
+    parsed = urlparse(url)
+
+    if parsed.netloc not in (
+        "steamcommunity.com",
+        "www.steamcommunity.com",
+    ):
+        return None
+
+    if not parsed.path.startswith(
+        ("/workshop/filedetails/", "/sharedfiles/filedetails/")
+    ):
+        return None
+
+    ids = parse_qs(parsed.query).get("id", [])
+    return ids[0] if ids and ids[0].isdigit() else None
+
+def fetch_collection(url):
+    response = None
+
+    for attempt in range(3):
+        try:
+            time.sleep(RATE_LIMIT)
+            response = SESSION.get(url, timeout=30)
+            if response.status_code == 404:
+                raise Exception("This collection doesn't exist.")
+            if response.status_code == 403:
+                raise Exception("This collection is private or unavailable.")
+            response.raise_for_status()
+            break
+
+        except requests.RequestException:
+            if attempt == 2:
+                raise Exception(
+                    "Couldn't connect to Steam right now. Please try again."
+                )
+            time.sleep(1.5)
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    items = []
+
+    for div in soup.find_all("div", class_="collectionItem"):
+        link_tag = div.find("a", href=True)
+        title_tag = div.find(class_="workshopItemTitle")
+
+        if link_tag and title_tag:
+            items.append(
+                WorkshopItem(
+                    link_tag["href"],
+                    title_tag.get_text(strip=True),
+                )
+            )
+
+    return items
+
+def get_choice():
+    depot = (
+        "DepotDownloader.exe"
+        if system() == "Windows"
+        else "DepotDownloader"
+    )
+
+    options = {
+        "1": ("steam", None),
+        "2": ("depot", depot),
+        "3": ("links", None),
+        "4": ("ids", None),
+        "5": ("preview", None),
+    }
+
+    while True:
+        print("\nWhat would you like to export?")
+        print("  1) SteamCMD commands")
+        print("  2) DepotDownloader commands")
+        print("  3) Workshop links")
+        print("  4) Item IDs only")
+        print("  5) Preview items only")
+
+        choice = input("\nChoose (1-5): ").strip()
+
+        if choice in options:
+            return options[choice]
+
+        print("Please choose a number from 1 to 5.")
+
+def generate_content(items, mode, tool):
+    valid_items = [item for item in items if item.item_id]
+
+    if mode == "steam":
+        return "\n".join(
+            f"workshop_download_item {APP_ID} {item.item_id}"
+            for item in valid_items
+        )
+
+    if mode == "depot":
+        return "\n".join(
+            f"{tool} -app {APP_ID} -pubfile {item.item_id}"
+            for item in valid_items
+        )
+
+    if mode == "links":
+        return "\n".join(item.link for item in valid_items)
+
+    if mode == "ids":
+        return "\n".join(item.item_id for item in valid_items)
+
+    return ""
+
+def write_file(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w", encoding="utf-8") as file:
+        file.write(content)
+
+def confirm_overwrite(path):
+    while True:
+        reply = input(
+            f"\n'{path}' already exists.\nReplace it? (y/n): "
+        ).strip().lower()
+
+        if reply in ("y", "yes"):
+            return True
+
+        if reply in ("n", "no"):
+            return False
+
+        print("Please type y or n.")
+
+def preview_items(items):
+    print("\nCollection Preview:\n")
+
+    for index, item in enumerate(items, 1):
+        suffix = " (missing ID)" if not item.item_id else ""
+        print(f"{index}. {item.title}{suffix}")
+
+def main():
+    url = input("\nPaste the Steam collection URL: ").strip()
+
+    collection_id = get_collection_id(url)
+
+    if not collection_id:
+        print("That doesn't look like a valid Steam collection link.")
         return
 
-    collection_id = search(r'id=(\d+)', url).group(1)
-    print("Fetching collection page...")
-
-    session = Session()
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
-    session.headers.update({'User-Agent': user_agent})
-    print(f"Using User-Agent: {session.headers['User-Agent']}")
+    print("\nLoading collection...")
 
     try:
-        response = session.get(url, timeout=30)
-        response.raise_for_status()
-    except exceptions.HTTPError as e:
-        print(f"HTTP error: {e}. Collection doesn't exist or unable to access.")
-        return
-    except exceptions.ConnectionError:
-        print("Unable to connect to Steam. Check your internet connection.")
-        return
-    except exceptions.Timeout:
-        print("The request timed out. Connection might be slow or unstable.")
-        return
-    except exceptions.RequestException as e:
-        print(f"An error occurred while fetching the page: {e}.")
+        items = fetch_collection(url)
+    except Exception as error:
+        print(f"\n{error}")
         return
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    links = []
-    for item in soup.select('div.collectionItem'):
-        link_tag = item.select_one('a[href]')
-        title_tag = item.select_one('.workshopItemTitle')
-        if link_tag and title_tag:
-            links.append((link_tag['href'], title_tag.text.strip()))
+    if not items:
+        print("\nNo items were found in this collection.")
+        return
 
-    if links:
-        is_windows = system() == "Windows"
-        depotdownloader_tool = "DepotDownloader.exe" if is_windows else "DepotDownloader"
+    print(f"\nFound {len(items)} items.")
 
-        while True:
-            print("\nPlease choose one of the following options:")
-            print("1 - Generate SteamCMD download commands")
-            print("2 - Generate DepotDownloader download commands")
-            print("3 - Only list the addon links (no download commands)")
-            print("4 - Only list the addon IDs")
-            
-            choice = input("\nEnter your choice (1-4): ").strip().lower()
-            
-            if choice == '1':
-                commands = []
-                for link, _ in links:
-                    item_id = search(r'id=(\d+)', link).group(1)
-                    commands.append(f"workshop_download_item 4000 {item_id}")
-                content_to_write = '\n'.join(commands) + '\n'
-                save_message = "Saved SteamCMD commands to"
-                tool = "SteamCMD"
-                break
-            elif choice == '2':
-                commands = []
-                for link, _ in links:
-                    item_id = search(r'id=(\d+)', link).group(1)
-                    commands.append(f"{depotdownloader_tool} -app 4000 -pubfile {item_id}")
-                content_to_write = '\n'.join(commands) + '\n'
-                save_message = "Saved DepotDownloader commands to"
-                tool = depotdownloader_tool
-                break
-            elif choice == '3':
-                content_to_write = '\n'.join(link for link, _ in links) + '\n'
-                save_message = f"Found {len(links)} links and saved to"
-                tool = None
-                break
-            elif choice == '4':
-                addon_ids = []
-                for link, _ in links:
-                    item_id = search(r'id=(\d+)', link).group(1)
-                    addon_ids.append(item_id)
-                content_to_write = '\n'.join(addon_ids) + '\n'
-                save_message = f"Saved {len(links)} addon IDs to"
-                tool = None
-                break
-            else:
-                print("Invalid choice. Please enter a number from 1 to 4.")
+    mode, tool = get_choice()
 
-        file_name = f'addon_links-{collection_id}.txt'
-        if path.exists(file_name):
-            while True:
-                overwrite = input(f"'{file_name}' already exists. Overwrite? (y/n): ").strip().lower()
-                if overwrite == 'y':
-                    print("Overwriting file...")
-                    break
-                elif overwrite == 'n':
-                    print("File was not overwritten.")
-                    return
-                else:
-                    print("Please enter 'y' or 'n'.")
+    if mode == "preview":
+        preview_items(items)
+        return
 
-        try:
-            with open(file_name, 'w') as file:
-                file.write(content_to_write)
-            print(f"{save_message} '{file_name}'.")
-            if tool:
-                print(f"You can copy the commands from '{file_name}' to use with {tool}.")
-        except IOError as e:
-            print(f"Couldn't save the file: {e}. Do you have permission to write here?")
-    else:
-        print("Unable to find any addons in this collection. Could be a hidden collection or no addons in it.")
+    content = generate_content(items, mode, tool)
+
+    if not content:
+        print("Nothing to export.")
+        return
+
+    suffix_map = {
+        "steam": "steamcmd",
+        "depot": "depotdownloader",
+        "links": "links",
+        "ids": "ids",
+    }
+
+    output_file = Path(
+        f"addon_{suffix_map[mode]}-{collection_id}.txt"
+    )
+
+    if output_file.exists():
+        if not confirm_overwrite(output_file):
+            print("Cancelled.")
+            return
+
+    try:
+        write_file(output_file, content + "\n")
+        print(f"\nSaved successfully to: {output_file}")
+    except OSError:
+        print("\nCouldn't save the file. Please try again.")
