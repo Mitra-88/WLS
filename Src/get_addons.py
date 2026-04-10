@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 from platform import system
 from urllib.parse import urlparse, parse_qs
+from user_agent import get_random_user_agent
 from bs4 import BeautifulSoup
 
 ID_REGEX = re.compile(r"id=(\d+)")
@@ -11,10 +12,7 @@ RATE_LIMIT = 0.5
 SESSION = requests.Session()
 SESSION.headers.update(
     {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/146.0.0.0 Safari/537.36"
-        ),
+        "User-Agent": get_random_user_agent(),
         "Referer": "https://steamcommunity.com/",
         "Accept-Language": "en-US,en;q=0.9",
     }
