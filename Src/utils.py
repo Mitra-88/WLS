@@ -5,7 +5,7 @@ from requests import __version__ as requests_version
 from bs4  import __version__ as beautifulsoup4_version
 from PyInstaller import __version__ as pyinstaller_version
 
-wls_version = f"v2.0.0 ({uuid4().hex[:7]})"
+wls_version = f"v2.1.0 ({uuid4().hex[:7]})"
 build_date = datetime.now().strftime("%Y-%m-%d (%A, %B %d)")
 
 def normalize_architecture(arch):

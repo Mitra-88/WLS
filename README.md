@@ -2,8 +2,6 @@
 
 **WLS** is a command-line tool designed to fetch addon links from Steam Workshop collections and provide multiple output options for managing addons. For users who use tools like SteamCMD or DepotDownloader to download Steam Workshop content.
 
-_Currently hardcoded to `4000` (Garry’s Mod). Modify the code for other games if needed._
-
 ## Features
 
 - 🖥️ **Cross-Platform:** Works on Windows, macOS, and Linux.

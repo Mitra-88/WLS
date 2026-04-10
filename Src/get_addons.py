@@ -6,7 +6,6 @@ from platform import system
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
-APP_ID = 4000
 ID_REGEX = re.compile(r"id=(\d+)")
 RATE_LIMIT = 0.5
 SESSION = requests.Session()
@@ -119,18 +118,18 @@ def get_choice():
 
         print("Please choose a number from 1 to 5.")
 
-def generate_content(items, mode, tool):
+def generate_content(items, mode, tool, app_id):
     valid_items = [item for item in items if item.item_id]
 
     if mode == "steam":
         return "\n".join(
-            f"workshop_download_item {APP_ID} {item.item_id}"
+            f"workshop_download_item {app_id} {item.item_id}"
             for item in valid_items
         )
 
     if mode == "depot":
         return "\n".join(
-            f"{tool} -app {APP_ID} -pubfile {item.item_id}"
+            f"{tool} -app {app_id} -pubfile {item.item_id}"
             for item in valid_items
         )
 
@@ -192,13 +191,16 @@ def main():
 
     print(f"\nFound {len(items)} items.")
 
+    user_input = input("\nEnter App ID (Press Enter for Garry's Mod - 4000): ").strip()
+    app_id = user_input if user_input else "4000"
+
     mode, tool = get_choice()
 
     if mode == "preview":
         preview_items(items)
         return
 
-    content = generate_content(items, mode, tool)
+    content = generate_content(items, mode, tool, app_id)
 
     if not content:
         print("Nothing to export.")
