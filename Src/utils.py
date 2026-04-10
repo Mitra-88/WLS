@@ -3,8 +3,8 @@ from requests import __version__ as requests_version
 from bs4  import __version__ as beautifulsoup4_version
 from PyInstaller import __version__ as pyinstaller_version
 
-wls_version = f"v2.0.0 (ea7edfa)"
-build_date = "2026-04-09 (Thursday, April 09)"
+wls_version = f"v2.1.0 (74a6f36)"
+build_date = "2026-04-09 (Friday, April 10)"
 
 def normalize_architecture(arch):
     mapping = {
